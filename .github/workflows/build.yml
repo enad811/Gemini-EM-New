@@ -1,42 +1,79 @@
-name: Build APK
+from kivy.app import App
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.button import Button
+from kivy.uix.label import Label
+from kivy.uix.textinput import TextInput
+from kivy.core.window import Window
+from kivy.utils import get_color_from_hex
 
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
+# إعدادات شاشة التطبيق
+Window.clearcolor = get_color_from_hex('#0f172a')  # خلفية كحلية داكنة جديدة
 
-jobs:
-  build:
-    runs-on: ubuntu-20.04
+class SpeedTestApp(App):
+    def build(self):
+        self.title = "Speed Test App v1.0"
+        
+        # الحاوية الرئيسية
+        layout = BoxLayout(orientation='vertical', padding=40, spacing=20)
+        
+        # عنوان المشروع الجديد
+        title_label = Label(
+            text="Project: Speed Build Test",
+            font_size='26sp',
+            bold=True,
+            color=get_color_from_hex('#38bdf8'),
+            size_hint_y=None,
+            height=50
+        )
+        layout.add_widget(title_label)
+        
+        # حقل إدخال رقمي بسيط
+        self.number_input = TextInput(
+            text="5",
+            font_size='22sp',
+            multiline=False,
+            input_filter='int',  # يقبل أرقام فقط
+            background_color=get_color_from_hex('#1e293b'),
+            foreground_color=get_color_from_hex('#f8fafc'),
+            padding=[15, 15, 15, 15],
+            size_hint_y=None,
+            height=60
+        )
+        layout.add_widget(self.number_input)
+        
+        # زر الحساب والاختبار
+        btn = Button(
+            text="Multiply by 100",
+            font_size='20sp',
+            bold=True,
+            background_normal='',
+            background_color=get_color_from_hex('#10b981'),  # لون أخضر
+            color=get_color_from_hex('#ffffff'),
+            size_hint_y=None,
+            height=60
+        )
+        btn.bind(on_press=self.calculate)
+        layout.add_widget(btn)
+        
+        # نص النتيجة
+        self.result_label = Label(
+            text="Result will appear here",
+            font_size='18sp',
+            color=get_color_from_hex('#94a3b8')
+        )
+        layout.add_widget(self.result_label)
+        
+        return layout
 
-    steps:
-    - uses: actions/checkout@v4
+    def calculate(self, instance):
+        # معادلة حسابية بسيطة جداً للاختبار دون أي مكتبات صوتية
+        try:
+            val = int(self.number_input.text)
+            res = val * 100
+            self.result_label.text = f"Calculation Done: {res}"
+            self.result_label.color = get_color_from_hex('#f43f5e')
+        except ValueError:
+            self.result_label.text = "Please enter a valid number!"
 
-    - name: Set up JDK
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'zulu'
-        java-version: '17'
-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
-
-    - name: Install Buildozer and Dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev sqlite3 bzip2 libbz2-dev liblzma-dev
-        pip3 install --user --upgrade buildozer cython virtualenv
-
-    - name: Build with Buildozer
-      run: |
-        export PATH=$PATH:~/.local/bin
-        yes | buildozer android debug
-      continue-on-error: false
-
-    - name: Upload APK Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: package
-        path: .buildozer/android/platform/build-android-arm64-v8a_armeabi-v7a/build/outputs/apk/debug/*.apk
+if __name__ == '__main__':
+    SpeedTestApp().run()
